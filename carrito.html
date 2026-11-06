@@ -3,10 +3,23 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Fuera de Órbita — Café</title>
+  <meta
+    name="description"
+    content="Revisa los productos de tu carrito y envía tu preorden a Zona Astro."
+  >
+  <title>Tu carrito | Zona Astro</title>
 
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700&family=Poppins:wght@400;600;700;800&display=swap"
+    rel="stylesheet"
+  >
   <link rel="stylesheet" href="CSS/carrito.css">
+  <link rel="stylesheet" href="CSS/header.css">
+  <link rel="stylesheet" href="CSS/footer.css">
 
+  <script src="scripts/cart-storage.js" defer></script>
   <script src="scripts/enviar_pedido.js" defer></script>
   <script src="scripts/carrito.js" defer></script>
   <script src="scripts/components.js" defer></script>
@@ -14,13 +27,12 @@
 
 <body>
 
-  <header>
-    <div id="header"></div>
-  </header>
+  <div id="header"></div>
 
-  <section class="hero">
+  <main>
+    <section class="hero" aria-labelledby="cart-page-title">
     <div class="hero__content">
-      <h1 class="hero__title">TU CARRITO ESTÁ<br>CASI LISTO.</h1>
+      <h1 class="hero__title" id="cart-page-title">TU CARRITO ESTÁ<br>CASI LISTO.</h1>
       <p class="hero__subtitle">
         Revisa tus artículos antes del despegue.
       </p>
@@ -33,35 +45,42 @@
         alt="Ilustración temática de Fuera de Órbita Café"
         width="300"
         height="200"
+        class="hero__astronaut"
+        decoding="async"
+        fetchpriority="high"
       >
-      <div class="hero__astronaut-placeholder" aria-hidden="true"></div>
     </div>
-  </section>
+    </section>
 
-  <main class="cart">
+  <section class="cart" aria-labelledby="cart-heading">
 
     <div class="cart__items">
-      <h2 class="cart__heading">PRODUCTOS EN TU CARRITO</h2>
+      <h2 class="cart__heading" id="cart-heading">PRODUCTOS EN TU CARRITO</h2>
 
-      <div class="cart__table">
+      <div class="cart__table" role="table" aria-label="Productos en tu carrito">
 
-        <div class="cart__row cart__row--head">
-          <span class="col col--product">Producto</span>
-          <span class="col col--qty">Cantidad</span>
-          <span class="col col--price">Precio</span>
-          <span class="col col--total">Total</span>
-          <span class="col col--remove">Eliminar</span>
+        <div class="cart__row cart__row--head" role="row">
+          <span class="col col--product" role="columnheader">Producto</span>
+          <span class="col col--qty" role="columnheader">Cantidad</span>
+          <span class="col col--price" role="columnheader">Precio</span>
+          <span class="col col--total" role="columnheader">Total</span>
+          <span class="col col--remove" role="columnheader">Eliminar</span>
         </div>
 
-        <div id="cart-list" class="cart__list">
+        <div
+          id="cart-list"
+          class="cart__list"
+          role="rowgroup"
+          aria-live="polite"
+          aria-relevant="additions removals text"
+        >
           <!-- Los productos se insertan dinámicamente mediante JavaScript -->
         </div>
-
-        <p id="cart-empty" class="cart__empty" hidden>
-          Tu carrito está vacío. Vuelve al menú para agregar productos.
-        </p>
-
       </div>
+
+      <p id="cart-empty" class="cart__empty" role="status" aria-live="polite" hidden>
+        Tu carrito está vacío. Vuelve al menú para agregar productos.
+      </p>
 
       <!-- Resumen del pedido -->
       <section class="cart-summary" aria-labelledby="summary-title">
@@ -73,6 +92,16 @@
         <div class="cart-summary__line">
           <span>Artículos en el pedido</span>
           <span id="cart-total-items">0</span>
+        </div>
+
+        <div class="cart-summary__line">
+          <span>Subtotal</span>
+          <span id="cart-subtotal">$0.00</span>
+        </div>
+
+        <div class="cart-summary__line">
+          <span>Envío</span>
+          <span id="cart-shipping">$0.00</span>
         </div>
 
         <div class="cart-summary__line cart-summary__line--total">
@@ -114,11 +143,10 @@
 
     </div>
 
+  </section>
   </main>
 
-  <footer>
-    <div id="footer"></div>
-  </footer>
+  <div id="footer"></div>
 
 </body>
 </html>

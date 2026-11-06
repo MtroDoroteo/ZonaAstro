@@ -55,7 +55,16 @@ body {
 .hero__image {
   flex: 0 0 320px;
   height: 220px;
-  /* Sin imagen: se deja el espacio reservado en el layout */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero__image img {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
 }
 
 /* ==========================================================
@@ -96,6 +105,11 @@ body {
   color: var(--color-button-text);
 }
 
+.categories__item:focus-visible {
+  outline: 3px solid var(--color-text);
+  outline-offset: -4px;
+}
+
 .categories__icon {
   font-size: 20px;
 }
@@ -107,9 +121,14 @@ body {
 ========================================================== */
 .products {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1px;
   background: var(--color-border);
+  min-width: 0;
+}
+
+.products > * {
+  min-width: 0;
 }
 
 /* ==========================================================
@@ -119,14 +138,41 @@ body {
 ========================================================== */
 .product-card {
   display: grid;
-  grid-template-columns: 130px 1fr;
+  grid-template-columns: 130px minmax(0, 1fr);
   background: var(--color-bg-card);
   min-height: 150px;
+  min-width: 0;
 }
 
 .product-card__image {
+  position: relative;
   background: #111111;
-  /* Espacio reservado para {{ producto.imagen_url }} */
+  min-height: 150px;
+}
+
+.product-card__image img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 150px;
+  object-fit: cover;
+}
+
+.product-card__badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: #333;
+  color: #fff;
+  font-size: 12px;
+}
+
+.product-card__price-original {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--color-text-muted);
 }
 
 .product-card__info {
@@ -135,6 +181,7 @@ body {
   justify-content: center;
   gap: 6px;
   padding: 16px 18px;
+  min-width: 0;
 }
 
 .product-card__name {
@@ -145,6 +192,7 @@ body {
   letter-spacing: 0.5px;
   text-transform: uppercase;
   color: var(--color-gold);
+  overflow-wrap: anywhere;
 }
 
 .product-card__description {
@@ -215,6 +263,20 @@ body {
   color: var(--color-text);
 }
 
+.products__loading,
+.products__empty,
+.products__error {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 32px 20px;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.products__error {
+  color: #ffb4a9;
+}
+
 /* ==========================================================
    RESPONSIVE
 ========================================================== */
@@ -227,7 +289,7 @@ body {
     border-bottom: 1px solid var(--color-border);
   }
   .products {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -242,7 +304,12 @@ body {
     width: 100%;
   }
   .product-card {
-    grid-template-columns: 100px 1fr;
+    grid-template-columns: minmax(0, 100px) minmax(0, 1fr);
+    width: 100%;
+  }
+  .product-card__footer {
+    flex-wrap: wrap;
+    justify-content: flex-start;
   }
 }
 

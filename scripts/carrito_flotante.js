@@ -1,18 +1,33 @@
-function updateCartBadge(animate = false) {
-  const total = loadCart().reduce((sum, i) => sum + i.qty, 0);
-  const badge = document.getElementById('cart-count');
-  badge.textContent = total;
-  badge.hidden = total === 0;
-
-  if (animate) {
-    const icon = document.getElementById('floating-cart');
-    icon.classList.remove('floating-cart--bump');
-    void icon.offsetWidth; // reinicia la animación
-    icon.classList.add('floating-cart--bump');
+(() => {
+  function getCartCount() {
+    return window.CartStorage.load().reduce((total, item) => total + item.qty, 0);
   }
-}
 
-updateCartBadge();
-window.addEventListener('storage', (e) => {
-  if (e.key === CART_STORAGE_KEY) updateCartBadge();
-});
+  window.updateCartBadge = (animate = false) => {
+    const badge = document.getElementById('cart-count');
+    if (!badge) return;
+
+    const total = getCartCount();
+    badge.textContent = String(total);
+    badge.hidden = total === 0;
+    const icon = document.getElementById('floating-cart');
+    if (icon) {
+      icon.setAttribute(
+        'aria-label',
+        total === 1 ? 'Ver carrito, 1 artículo' : `Ver carrito, ${total} artículos`
+      );
+    }
+
+    if (animate) {
+      if (!icon) return;
+      icon.classList.remove('floating-cart--bump');
+      void icon.offsetWidth;
+      icon.classList.add('floating-cart--bump');
+    }
+  };
+
+  window.updateCartBadge();
+  window.addEventListener('storage', (event) => {
+    if (event.key === window.CartStorage.key) window.updateCartBadge();
+  });
+})();

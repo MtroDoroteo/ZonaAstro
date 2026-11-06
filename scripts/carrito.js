@@ -1,31 +1,7 @@
-const CART_STORAGE_KEY = 'orbita_cart';
 const SHIPPING_COST = 5.00;
 
 const currency = (n) =>
   `$${Number(n).toFixed(2)}`;
-
-/* ---------- Acceso a localStorage ---------- */
-
-function loadCart() {
-  try {
-    const raw = localStorage.getItem(CART_STORAGE_KEY);
-    if (!raw) return [];
-
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch (err) {
-    console.error('No se pudo leer el carrito:', err);
-    return [];
-  }
-}
-
-function saveCart(cart) {
-  try {
-    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
-  } catch (err) {
-    console.error('No se pudo guardar el carrito:', err);
-  }
-}
 
 /* ---------- Referencias al DOM ---------- */
 
@@ -40,7 +16,7 @@ const grandTotalEl = document.getElementById('cart-grand-total');
 const preorderBtn = document.getElementById('preorder-button');
 const preorderMessage = document.getElementById('preorder-message');
 
-let cart = loadCart();
+let cart = window.CartStorage.load();
 
 /* ---------- Cálculo y resumen ---------- */
 
@@ -84,7 +60,7 @@ function updateSummary() {
 /* ---------- Render ---------- */
 
 function render() {
-  listEl.innerHTML = '';
+  listEl.replaceChildren();
 
   if (cart.length === 0) {
     emptyEl.hidden = false;
@@ -103,66 +79,109 @@ function buildRow(item) {
   const row = document.createElement('div');
   row.className = 'cart__row';
   row.dataset.id = item.id;
+  row.setAttribute('role', 'row');
 
   const lineTotal = Number(item.price) * Number(item.qty);
 
-  row.innerHTML = `
-    <div class="col col--product">
-      <div class="product__thumb">
-        ${
-          item.image
-            ? `<img src="${item.image}" alt="${item.name}">`
-            : '☕'
-        }
-      </div>
-      <div class="product__info">
-        <span class="product__name">${item.name}</span>
-        ${
-          item.variant
-            ? `<span class="product__variant">${item.variant}</span>`
-            : ''
-        }
-      </div>
-    </div>
+  const productCell = document.createElement('div');
+  productCell.className = 'col col--product';
+  productCell.setAttribute('role', 'cell');
 
-    <div class="col col--qty">
-      <button
-        type="button"
-        class="qty-btn qty-btn--minus"
-        aria-label="Disminuir cantidad"
-      >−</button>
+  const thumbnail = document.createElement('div');
+  thumbnail.className = 'product__thumb';
+  const imageUrl = getSafeImageUrl(item.image);
+  if (imageUrl) {
+    const image = document.createElement('img');
+    image.src = imageUrl;
+    image.alt = '';
+    image.width = 54;
+    image.height = 54;
+    image.loading = 'lazy';
+    image.decoding = 'async';
+    thumbnail.appendChild(image);
+  } else {
+    thumbnail.textContent = '☕';
+    thumbnail.setAttribute('aria-hidden', 'true');
+  }
 
-      <span class="qty-value">${item.qty}</span>
+  const info = document.createElement('div');
+  info.className = 'product__info';
+  const name = document.createElement('span');
+  name.className = 'product__name';
+  name.textContent = item.name;
+  info.appendChild(name);
+  if (item.variant) {
+    const variant = document.createElement('span');
+    variant.className = 'product__variant';
+    variant.textContent = item.variant;
+    info.appendChild(variant);
+  }
+  productCell.append(thumbnail, info);
 
-      <button
-        type="button"
-        class="qty-btn qty-btn--plus"
-        aria-label="Aumentar cantidad"
-      >+</button>
-    </div>
+  const quantityCell = document.createElement('div');
+  quantityCell.className = 'col col--qty';
+  quantityCell.setAttribute('role', 'cell');
+  quantityCell.setAttribute('aria-label', `Cantidad de ${item.name}`);
 
-    <div class="col col--price">${currency(item.price)}</div>
-    <div class="col col--total">${currency(lineTotal)}</div>
+  const minusButton = document.createElement('button');
+  minusButton.type = 'button';
+  minusButton.className = 'qty-btn qty-btn--minus';
+  minusButton.setAttribute('aria-label', `Disminuir cantidad de ${item.name}`);
+  minusButton.textContent = '−';
 
-    <div class="col col--remove">
-      <button
-        type="button"
-        class="remove-btn"
-        aria-label="Eliminar ${item.name}"
-      >🗑️</button>
-    </div>
-  `;
+  const quantity = document.createElement('span');
+  quantity.className = 'qty-value';
+  quantity.textContent = String(item.qty);
 
-  row.querySelector('.qty-btn--minus')
-    .addEventListener('click', () => changeQty(item.id, -1));
+  const plusButton = document.createElement('button');
+  plusButton.type = 'button';
+  plusButton.className = 'qty-btn qty-btn--plus';
+  plusButton.setAttribute('aria-label', `Aumentar cantidad de ${item.name}`);
+  plusButton.textContent = '+';
+  quantityCell.append(minusButton, quantity, plusButton);
 
-  row.querySelector('.qty-btn--plus')
-    .addEventListener('click', () => changeQty(item.id, 1));
+  const priceCell = document.createElement('div');
+  priceCell.className = 'col col--price';
+  priceCell.setAttribute('role', 'cell');
+  priceCell.setAttribute('aria-label', `Precio por unidad: ${currency(item.price)}`);
+  priceCell.textContent = currency(item.price);
 
-  row.querySelector('.remove-btn')
-    .addEventListener('click', () => removeItem(item.id));
+  const totalCell = document.createElement('div');
+  totalCell.className = 'col col--total';
+  totalCell.setAttribute('role', 'cell');
+  totalCell.setAttribute('aria-label', `Total de ${item.name}: ${currency(lineTotal)}`);
+  totalCell.textContent = currency(lineTotal);
+
+  const removeCell = document.createElement('div');
+  removeCell.className = 'col col--remove';
+  removeCell.setAttribute('role', 'cell');
+  const removeButton = document.createElement('button');
+  removeButton.type = 'button';
+  removeButton.className = 'remove-btn';
+  removeButton.setAttribute('aria-label', `Eliminar ${item.name} del carrito`);
+  removeButton.textContent = '×';
+  removeCell.appendChild(removeButton);
+
+  row.append(productCell, quantityCell, priceCell, totalCell, removeCell);
+
+  minusButton.addEventListener('click', () => changeQty(item.id, -1));
+
+  plusButton.addEventListener('click', () => changeQty(item.id, 1));
+
+  removeButton.addEventListener('click', () => removeItem(item.id));
 
   return row;
+}
+
+function getSafeImageUrl(value) {
+  if (typeof value !== 'string' || !value.trim()) return '';
+
+  try {
+    const url = new URL(value, window.location.href);
+    return url.protocol === 'https:' ? url.href : '';
+  } catch (error) {
+    return '';
+  }
 }
 
 /* ---------- Acciones sobre el carrito ---------- */
@@ -177,14 +196,14 @@ function changeQty(id, delta) {
     cart = cart.filter((i) => i.id !== id);
   }
 
-  saveCart(cart);
+  window.CartStorage.save(cart);
   render();
 }
 
 function removeItem(id) {
   cart = cart.filter((i) => i.id !== id);
 
-  saveCart(cart);
+  window.CartStorage.save(cart);
   render();
 }
 
@@ -197,7 +216,7 @@ if (preorderBtn) {
     if (isSending) return;
 
     // Leer nuevamente el carrito antes de continuar.
-    cart = loadCart();
+    cart = window.CartStorage.load();
 
     const totalItems = cart.reduce(
       (sum, item) => sum + Number(item.qty || 0),
@@ -229,7 +248,7 @@ if (preorderBtn) {
 
       // Solo se limpia el carrito si el pedido se registró correctamente.
       cart = [];
-      saveCart(cart);
+      window.CartStorage.save(cart);
       render();
 
       preorderMessage.textContent =
@@ -252,8 +271,8 @@ if (preorderBtn) {
 /* ---------- Sincronía entre pestañas ---------- */
 
 window.addEventListener('storage', (e) => {
-  if (e.key === CART_STORAGE_KEY) {
-    cart = loadCart();
+  if (e.key === window.CartStorage.key) {
+    cart = window.CartStorage.load();
     render();
   }
 });

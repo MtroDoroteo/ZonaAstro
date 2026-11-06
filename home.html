@@ -1,82 +1,96 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Fuera de Órbita — Café</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta
+    name="description"
+    content="Disfruta café, bebidas frías y alimentos en Zona Astro. Descubre el menú y visítanos en Puebla."
+  >
+  <title>Zona Astro | Café y momentos fuera de órbita</title>
 
-<link rel="stylesheet" href="CSS/home.css">
-<link rel="stylesheet" href="CSS/carrito_flotante.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap"
+    rel="stylesheet"
+  >
+  <link rel="stylesheet" href="CSS/home.css">
+  <link rel="stylesheet" href="CSS/header.css">
+  <link rel="stylesheet" href="CSS/footer.css">
+  <link rel="stylesheet" href="CSS/carrito_flotante.css">
 
-<script src="scripts/components.js"></script>
-<script src="scripts/carrito_flotante.js"></script>
-
+  <script src="scripts/cart-storage.js" defer></script>
+  <script src="scripts/components.js" defer></script>
+  <script src="scripts/carrito_flotante.js" defer></script>
 </head>
 
-<header>
-
+<body>
   <div id="header"></div>
 
-</header>
+  <main>
+    <div class="wrap">
+      <section class="hero" aria-labelledby="home-title">
+        <div class="hero-copy">
+          <h1 id="home-title">Tu próximo viaje<br>comienza con un café</h1>
+          <p>Café, bebidas frías y momentos fuera de órbita.</p>
+          <a href="menu.html" class="btn">VER MENÚ →</a>
+        </div>
 
-<body>
+        <img
+          src="https://i.ibb.co/DXp7RbH/Gemini-Generated-Image-hgbqp2hgbqp2hgbq.jpg"
+          alt="Bebida de café de Zona Astro"
+          width="550"
+          height="550"
+          fetchpriority="high"
+        >
+      </section>
 
-<div class="wrap">
+      <nav class="home-categories" aria-label="Categorías del menú">
+        <a href="menu.html?categoria=bebidas-calientes" class="cat1">
+          <span class="icon" aria-hidden="true">☕</span> Bebidas calientes
+        </a>
+        <a href="menu.html?categoria=bebidas-frias" class="cat2">
+          <span class="icon" aria-hidden="true">🥤</span> Bebidas frías
+        </a>
+        <a href="menu.html?categoria=alimentos" class="cat3">
+          <span class="icon" aria-hidden="true">🥐</span> Alimentos
+        </a>
+      </nav>
 
-  <!-- HERO -->
-  <section class="hero">
-    <div class="hero-copy">
-      <h1>Tu próximo viaje<br>comienza con un café</h1>
-      <p>Café, bebidas frías y momentos fuera de órbita.</p>
+      <h2 class="promo-title" id="promociones">Promoción / Producto destacado</h2>
+      <section class="promo" aria-labelledby="promo-copy">
+        <h3 class="promo-copy" id="promo-copy">Descubre tu próxima<br>bebida fuera de órbita</h3>
 
-      <a href="#menu" class="btn">VER MENÚ →</a>
+        <div class="promo-product" aria-hidden="true">
+          <div class="box">
+            <span class="brand">Órbita Premium</span>
+            COFFEE
+            <span class="line">Freeze Dried</span>
+          </div>
+          <div class="jar">
+            <div class="label">Órbita<br>Premium<br>Coffee</div>
+          </div>
+        </div>
+
+        <div class="promo-price">
+          <p class="price">$6.<sup>50</sup></p>
+          <a href="menu.html" class="btn-order">ORDENAR</a>
+        </div>
+      </section>
+
+      <section class="about" id="nosotros" aria-labelledby="about-title">
+        <h2 id="about-title">Café y exploración</h2>
+        <p>Un espacio para disfrutar tus bebidas favoritas y hacer una pausa fuera de la rutina.</p>
+      </section>
     </div>
+  </main>
 
-    <img src="https://i.ibb.co/DXp7RbH/Gemini-Generated-Image-hgbqp2hgbqp2hgbq.jpg" weight = 300 height="550">
-
-  </section>
-
-  <!-- CATEGORY NAV -->
-  <nav class="nav" id="menu">
-    <a href="#" class="cat1"><span class="icon">☕</span> Bebidas Calientes</a>
-    <a href="#" class="cat2"><span class="icon">🥤</span> Bebidas Frías</a>
-    <a href="#" class="cat3"><span class="icon">🥐</span> Alimentos</a>
-  </nav>
-
-  <!-- PROMO -->
-  <div class="promo-title">Promoción / Producto Destacado</div>
-  <section class="promo">
-    <div class="promo-copy">"Descubre tu próxima<br>bebida fuera de órbita"</div>
-
-    <div class="promo-product">
-      <div class="box">
-        <span class="brand">Órbita Premium</span>
-        COFFEE
-        <span class="line">Freeze Dried</span>
-      </div>
-      <div class="jar">
-        <div class="label">Órbita<br>Premium<br>Coffee</div>
-      </div>
-    </div>
-
-    <div class="promo-price">
-      <div class="price">$6.<sup>50</sup></div>
-      <button class="btn-order">ORDENAR</button>
-    </div>
-  </section>
-
-</div>
-
-<a href="carrito.html" class="floating-cart" id="floating-cart" aria-label="Ver carrito">
-  🛒<span class="floating-cart__badge" id="cart-count" hidden>0</span>
-</a>
-
-</body>
-
-<footer>
+  <a href="carrito.html" class="floating-cart" id="floating-cart" aria-label="Ver carrito">
+    <span aria-hidden="true">🛒</span>
+    <span class="floating-cart__badge" id="cart-count" hidden>0</span>
+  </a>
 
   <div id="footer"></div>
-
-</footer>
-
+</body>
 </html>

@@ -31,33 +31,13 @@ const CATEGORY_SHEETS = {
 // Caché simple para no volver a pedir la misma hoja varias veces
 const productsCache = {};
 
-const CART_STORAGE_KEY = 'orbita_cart';
-
-function loadCart() {
-  try {
-    const parsed = JSON.parse(localStorage.getItem(CART_STORAGE_KEY));
-    return Array.isArray(parsed) ? parsed : [];
-  } catch (err) {
-    console.error('No se pudo leer el carrito:', err);
-    return [];
-  }
-}
-
-function saveCart(cart) {
-  try {
-    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
-  } catch (err) {
-    console.error('No se pudo guardar el carrito:', err);
-  }
-}
-
 function findProductByUid(uid) {
   return Object.values(productsCache).flat().find(p => String(p.uid) === String(uid));
 }
 
 // Devuelve true si se agregó, false si ya se alcanzó el stock
 function addToCart(producto) {
-  const cart = loadCart();
+  const cart = window.CartStorage.load();
   const existing = cart.find(i => i.id === producto.uid);
 
   if (existing) {
@@ -73,7 +53,7 @@ function addToCart(producto) {
     });
   }
 
-  saveCart(cart);
+  window.CartStorage.save(cart);
   return true;
 }
 
@@ -120,12 +100,15 @@ async function fetchProductsFromSheet(sheetName) {
         values[columnNames[i]] = cell ? cell.v : '';
       });
 
-      const precioBase = parseFloat(values['precio']) || 0;
-      const descuentoPorcentaje = parseFloat(values['descuento']) || 0;
-      const precioFinal = descuentoPorcentaje > 0
-        ? precioBase - (precioBase * descuentoPorcentaje / 100)
-        : precioBase;
-      const stock = parseFloat(values['stock']) || 0;
+      const precioLeido = Number.parseFloat(values['precio']);
+      const descuentoLeido = Number.parseFloat(values['descuento']);
+      const stockLeido = Number.parseFloat(values['stock']);
+      const precioBase = Number.isFinite(precioLeido) ? Math.max(0, precioLeido) : 0;
+      const descuentoPorcentaje = Number.isFinite(descuentoLeido)
+        ? Math.min(100, Math.max(0, descuentoLeido))
+        : 0;
+      const precioFinal = precioBase - (precioBase * descuentoPorcentaje / 100);
+      const stock = Number.isFinite(stockLeido) ? Math.max(0, Math.floor(stockLeido)) : 0;
 
       return {
         uid: `${sheetName}-${values['id'] !== undefined && values['id'] !== '' ? values['id'] : index}`,
@@ -151,44 +134,96 @@ async function fetchProductsFromSheet(sheetName) {
  */
 function renderProducts(products) {
   const grid = document.getElementById('products-grid');
-  grid.innerHTML = '';
+  grid.replaceChildren();
 
   if (!products.length) {
-    grid.innerHTML = '<p class="products__empty">No hay productos disponibles en esta categoría por ahora.</p>';
+    const emptyMessage = document.createElement('p');
+    emptyMessage.className = 'products__empty';
+    emptyMessage.textContent = 'No hay productos disponibles en esta categoría por ahora.';
+    grid.appendChild(emptyMessage);
     return;
   }
 
   products.forEach(producto => {
-    const precioEntero = Math.trunc(producto.precioFinal);
-    const precioDecimales = '.' + Math.round((producto.precioFinal - precioEntero) * 100).toString().padStart(2, '0');
-
-    // Precio original tachado, solo si hay descuento aplicado
-    const precioOriginalHtml = producto.tieneDescuento
-      ? `<span class="product-card__price-original" style="text-decoration: line-through; opacity: 0.6; margin-right: 6px;">$${producto.precioBase.toFixed(2)}</span>`
-      : '';
-
     const article = document.createElement('article');
     article.className = 'product-card' + (producto.agotado ? ' product-card--agotado' : '');
     article.dataset.productId = producto.uid;
 
-    article.innerHTML = `
-      <div class="product-card__image" style="position: relative;">
-        ${producto.imagen_url ? `<img src="${producto.imagen_url}" height="95" alt="${producto.nombre}">` : ''}
-        ${producto.agotado ? '<span class="product-card__badge" style="position:absolute;top:8px;left:8px;background:#333;color:#fff;font-size:12px;padding:2px 8px;border-radius:4px;">Agotado</span>' : ''}
-      </div>
-      <div class="product-card__info">
-        <h2 class="product-card__name">${producto.nombre}</h2>
-        <div class="product-card__footer">
-          <p class="product-card__price">${precioOriginalHtml}$${precioEntero}<span class="product-card__price-decimals">${precioDecimales}</span></p>
-          <button class="product-card__button" data-action="ordenar" data-product-id="${producto.uid}" ${producto.agotado ? 'disabled' : ''}>
-            ${producto.agotado ? 'Agotado' : 'Ordenar'}
-          </button>
-        </div>
-      </div>
-    `;
+    const imageContainer = document.createElement('div');
+    imageContainer.className = 'product-card__image';
+    const imageUrl = getSafeImageUrl(producto.imagen_url);
+    if (imageUrl) {
+      const image = document.createElement('img');
+      image.src = imageUrl;
+      image.alt = producto.nombre;
+      image.width = 130;
+      image.height = 150;
+      image.loading = 'lazy';
+      image.decoding = 'async';
+      imageContainer.appendChild(image);
+    }
+
+    if (producto.agotado) {
+      const badge = document.createElement('span');
+      badge.className = 'product-card__badge';
+      badge.textContent = 'Agotado';
+      imageContainer.appendChild(badge);
+    }
+
+    const info = document.createElement('div');
+    info.className = 'product-card__info';
+
+    const name = document.createElement('h2');
+    name.className = 'product-card__name';
+    name.textContent = producto.nombre;
+
+    const footer = document.createElement('div');
+    footer.className = 'product-card__footer';
+
+    const price = document.createElement('p');
+    price.className = 'product-card__price';
+    if (producto.tieneDescuento) {
+      const originalPrice = document.createElement('del');
+      originalPrice.className = 'product-card__price-original';
+      originalPrice.textContent = currency(producto.precioBase);
+      price.append(originalPrice, document.createTextNode(' '));
+    }
+    price.appendChild(document.createTextNode(currency(producto.precioFinal)));
+
+    const button = document.createElement('button');
+    button.className = 'product-card__button';
+    button.type = 'button';
+    button.dataset.action = 'ordenar';
+    button.dataset.productId = producto.uid;
+    button.disabled = producto.agotado;
+    button.textContent = producto.agotado ? 'Agotado' : 'Ordenar';
+
+    footer.append(price, button);
+    info.append(name, footer);
+    article.append(imageContainer, info);
     grid.appendChild(article);
   });
 }
+
+function currency(amount) {
+  return new Intl.NumberFormat('es-MX', {
+    style: 'currency',
+    currency: 'MXN'
+  }).format(amount);
+}
+
+function getSafeImageUrl(value) {
+  if (typeof value !== 'string' || !value.trim()) return '';
+
+  try {
+    const url = new URL(value, window.location.href);
+    return url.protocol === 'https:' ? url.href : '';
+  } catch (error) {
+    return '';
+  }
+}
+
+let categoryRequestId = 0;
 
 /**
  * Carga (o toma de caché) los productos de una categoría y los
@@ -197,20 +232,38 @@ function renderProducts(products) {
 async function loadCategory(categoria) {
   const grid = document.getElementById('products-grid');
   const sheetName = CATEGORY_SHEETS[categoria];
+  const requestId = ++categoryRequestId;
 
   if (!sheetName) {
-    grid.innerHTML = `<p class="products__error">No hay una hoja configurada para la categoría "${categoria}".</p>`;
+    const errorMessage = document.createElement('p');
+    errorMessage.className = 'products__error';
+    errorMessage.textContent = `No hay una hoja configurada para la categoría "${categoria}".`;
+    grid.replaceChildren(errorMessage);
+    grid.setAttribute('aria-busy', 'false');
     return;
   }
 
-  grid.innerHTML = '<p class="products__loading">Cargando productos...</p>';
+  grid.setAttribute('aria-busy', 'true');
+  const loadingMessage = document.createElement('p');
+  loadingMessage.className = 'products__loading';
+  loadingMessage.textContent = 'Cargando productos...';
+  grid.replaceChildren(loadingMessage);
 
   try {
     const products = await fetchProductsFromSheet(sheetName);
+    if (requestId !== categoryRequestId) return;
     renderProducts(products);
   } catch (error) {
     console.error('Error al cargar productos desde Google Sheets:', error);
-    grid.innerHTML = '<p class="products__error">Ocurrió un error al cargar los productos. Intenta de nuevo más tarde.</p>';
+    if (requestId !== categoryRequestId) return;
+    const errorMessage = document.createElement('p');
+    errorMessage.className = 'products__error';
+    errorMessage.textContent = 'Ocurrió un error al cargar los productos. Intenta de nuevo más tarde.';
+    grid.replaceChildren(errorMessage);
+  } finally {
+    if (requestId === categoryRequestId) {
+      grid.setAttribute('aria-busy', 'false');
+    }
   }
 }
 
@@ -218,8 +271,12 @@ async function loadCategory(categoria) {
 // y carga los productos reales de la hoja correspondiente.
 document.querySelectorAll('.categories__item').forEach(btn => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('.categories__item').forEach(b => b.classList.remove('is-active'));
+    document.querySelectorAll('.categories__item').forEach((button) => {
+      button.classList.remove('is-active');
+      button.setAttribute('aria-pressed', 'false');
+    });
     btn.classList.add('is-active');
+    btn.setAttribute('aria-pressed', 'true');
     loadCategory(btn.dataset.category);
   });
 });
@@ -227,7 +284,17 @@ document.querySelectorAll('.categories__item').forEach(btn => {
 // Al cargar la página, muestra la categoría marcada como activa
 // (o la primera disponible si ninguna lo está).
 document.addEventListener('DOMContentLoaded', () => {
-  const activeBtn = document.querySelector('.categories__item.is-active');
+  const requestedCategory = new URLSearchParams(window.location.search).get('categoria');
+  const requestedBtn = [...document.querySelectorAll('.categories__item')]
+    .find((button) => button.dataset.category === requestedCategory);
+  const activeBtn = requestedBtn || document.querySelector('.categories__item.is-active');
+  if (requestedBtn) {
+    document.querySelectorAll('.categories__item').forEach((button) => {
+      const isActive = button === requestedBtn;
+      button.classList.toggle('is-active', isActive);
+      button.setAttribute('aria-pressed', String(isActive));
+    });
+  }
   const initialCategory = activeBtn ? activeBtn.dataset.category : Object.keys(CATEGORY_SHEETS)[0];
   loadCategory(initialCategory);
 });
@@ -236,8 +303,11 @@ function showAddedFeedback(btn, added) {
   btn.textContent = added ? '¡Agregado!' : 'Máximo en stock';
   btn.disabled = true;
   setTimeout(() => {
-    btn.textContent = 'Ordenar';
-    btn.disabled = false;
+    const product = findProductByUid(btn.dataset.productId);
+    const cartItem = window.CartStorage.load().find((item) => item.id === btn.dataset.productId);
+    const maxedOut = product && cartItem && cartItem.qty >= product.stock;
+    btn.textContent = maxedOut ? 'Máximo en stock' : 'Ordenar';
+    btn.disabled = Boolean(maxedOut);
   }, 900);
 }
 
@@ -250,5 +320,7 @@ document.getElementById('products-grid').addEventListener('click', (e) => {
 
   const added = addToCart(producto);
   showAddedFeedback(btn, added);
-  updateCartBadge(true); // se define en el paso 6
+  if (typeof window.updateCartBadge === 'function') {
+    window.updateCartBadge(true);
+  }
 });

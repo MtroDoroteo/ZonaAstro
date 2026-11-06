@@ -3,8 +3,6 @@
    texto crema (#EFE6D8), líneas sutiles (#3A2F20). Tipografía: display condensada en mayúsculas
    para títulos, sans-serif neutra para contenido tabular. */
 
-@import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700&display=swap');
-
 :root {
   --bg-deep: #0b0906;
   --bg-panel: #120e09;
@@ -84,20 +82,13 @@ a { color: inherit; }
 }
 
 /* Placeholder donde va la imagen del astronauta (se reemplaza por <img>) */
-.hero__astronaut-placeholder {
-  position: absolute;
-  inset: 0;
-  border: 1px dashed rgba(234, 181, 63, 0.35);
-  border-radius: var(--radius);
-  background:
-    radial-gradient(circle at 30% 35%, rgba(244, 207, 111, 0.35), transparent 45%);
-}
-
 .hero__astronaut {
   width: 100%;
   height: 100%;
   object-fit: contain;
   object-position: right center;
+  position: relative;
+  z-index: 1;
 }
 
 @media (max-width: 780px) {
@@ -389,6 +380,8 @@ a { color: inherit; }
 
   .col--price::before { content: "Precio: "; color: var(--cream-dim); }
   .col--total::before { content: "Total: "; color: var(--cream-dim); }
+  .col--qty::before { content: "Cantidad: "; color: var(--cream-dim); }
+  .col--remove::before { content: "Acción: "; color: var(--cream-dim); }
 }
 
 .cart-summary {
