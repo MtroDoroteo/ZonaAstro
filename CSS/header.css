@@ -216,3 +216,71 @@ body {
     transition: none;
   }
 }
+
+/* ---------- MEJORAS DE EXPERIENCIA MÓVIL ---------- */
+@media (max-width: 600px) {
+  .header {
+    padding: 10px 14px;
+    z-index: 30;
+  }
+
+  .header__inner {
+    min-height: 52px;
+    gap: 8px;
+  }
+
+  .header__inner > a:first-child {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .header__inner > a:first-child img {
+    width: clamp(92px, 29vw, 132px);
+    max-height: 48px;
+    object-fit: contain;
+    object-position: left center;
+  }
+
+  .btn-ordenar {
+    padding: 10px 12px;
+    font-size: 10px;
+    letter-spacing: .6px;
+  }
+
+  .nav__toggle {
+    flex: 0 0 40px;
+    min-width: 40px;
+    min-height: 40px;
+    align-items: center;
+    border-radius: 8px;
+  }
+
+  .site-nav .nav__list {
+    padding: 8px 20px 18px;
+  }
+
+  .site-nav .nav__link {
+    padding: 16px 0;
+    font-size: 14px;
+  }
+
+  .site-nav.nav--open {
+    max-height: 360px;
+    box-shadow: 0 14px 24px rgba(0, 0, 0, .35);
+  }
+}
+
+@media (max-width: 360px) {
+  .header__inner > a:first-child img {
+    width: 88px;
+  }
+
+  .btn-ordenar {
+    padding: 9px 8px;
+    font-size: 9px;
+  }
+
+  .header__inner {
+    gap: 5px;
+  }
+}
